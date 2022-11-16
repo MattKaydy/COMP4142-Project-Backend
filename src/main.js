@@ -3,6 +3,16 @@ const { Blockchain, Transaction } = require('./blockchain');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
 const fs = require('fs');
+// const mongoose = require('mongoose');
+
+// Connect to the database
+// mongoose.connect(
+//   'mongodb://localhost:27017/crypto',
+//   { useNewUrlParser: true, useUnifiedTopology: true },
+//   () => {
+//     console.log('DB connected');
+//   }
+// );
 
 // Your private key goes here
 const myKey = ec.keyFromPrivate(
@@ -13,20 +23,15 @@ const myKey = ec.keyFromPrivate(
 const myWalletAddress = myKey.getPublic('hex');
 console.log(myWalletAddress);
 
-// Get blockchain from storage or create a new blockchain
+// Get blockchain from storage and construct it
 const savjeeCoin = new Blockchain();
 const dataDir = './data';
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
 }
-if (fs.existsSync('./data/blockchain.json')) {
-  const blockchainData = JSON.parse(fs.readFileSync('./data/blockchain.json'));
-  savjeeCoin.chain = blockchainData.chain;
-  savjeeCoin.difficulty = blockchainData.difficulty;
-  savjeeCoin.pendingTransactions = blockchainData.pendingTransactions;
-  savjeeCoin.miningReward = blockchainData.miningReward;
-} else {
-  savjeeCoin.createGenesisBlock();
+const blockchainPath = './data/blockchain.json';
+if (fs.existsSync(blockchainPath)) {
+  savjeeCoin.constructBlockchain(blockchainPath);
 }
 
 // Mine first block
@@ -36,7 +41,6 @@ savjeeCoin.minePendingTransactions(myWalletAddress);
 const tx1 = new Transaction(myWalletAddress, 'address2', 100);
 tx1.signTransaction(myKey);
 savjeeCoin.addTransaction(tx1);
-
 
 // Mine block
 savjeeCoin.minePendingTransactions(myWalletAddress);
