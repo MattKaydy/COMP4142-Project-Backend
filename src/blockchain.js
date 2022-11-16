@@ -140,7 +140,7 @@ class Block {
 
 class Blockchain {
   constructor() {
-    this.chain = [];
+    this.chain = [this.createGenesisBlock()];
     this.chainHeight = this.chain.length;
     this.difficulty = 2;
     this.pendingTransactions = [];
