@@ -11,6 +11,7 @@ const myKey = ec.keyFromPrivate(
 
 // From that we can calculate your public key (which doubles as your wallet address)
 const myWalletAddress = myKey.getPublic('hex');
+console.log(myWalletAddress);
 
 // Get blockchain from storage or create a new blockchain
 const savjeeCoin = new Blockchain();
@@ -36,6 +37,7 @@ const tx1 = new Transaction(myWalletAddress, 'address2', 100);
 tx1.signTransaction(myKey);
 savjeeCoin.addTransaction(tx1);
 
+
 // Mine block
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
@@ -47,6 +49,8 @@ savjeeCoin.addTransaction(tx2);
 // Mine block
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
+console.log();
+console.log(savjeeCoin.chain);
 console.log();
 console.log(
   `Balance of xavier is ${savjeeCoin.getBalanceOfAddress(myWalletAddress)}`

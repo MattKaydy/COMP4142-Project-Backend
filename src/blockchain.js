@@ -76,10 +76,10 @@ class Block {
   /**
    * @param {number} timestamp
    * @param {Transaction[]} transactions
-   * @param {string} previousHash
+   * @param {string} previousBlockHash
    */
-  constructor(timestamp, transactions, previousHash = '') {
-    this.previousHash = previousHash;
+  constructor(timestamp, transactions, previousBlockHash = '') {
+    this.previousBlockHash = previousBlockHash;
     this.timestamp = timestamp;
     this.transactions = transactions;
     this.nonce = 0;
@@ -96,7 +96,7 @@ class Block {
     return crypto
       .createHash('sha256')
       .update(
-        this.previousHash +
+        this.previousBlockHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
           this.nonce
@@ -126,7 +126,7 @@ class Block {
    * returns true if everything checks out. False if the block is invalid.
    *
    * @returns {boolean}
-   */
+   */ 
   hasValidTransactions() {
     for (const tx of this.transactions) {
       if (!tx.isValid()) {
@@ -313,7 +313,7 @@ class Blockchain {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
-      if (previousBlock.hash !== currentBlock.previousHash) {
+      if (previousBlock.hash !== currentBlock.previousBlockHash) {
         return false;
       }
 

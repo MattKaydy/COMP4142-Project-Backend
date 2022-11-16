@@ -25,7 +25,6 @@
   "dependencies": {
     "debug": "^4.1.1",
     "elliptic": "^6.5.4",
-    "mongodb": "^4.11.0",
     "savjeecoin": "^1.0.1"
   },
   "devDependencies": {
