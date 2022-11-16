@@ -1,5 +1,5 @@
 {
-  "name": "savjeecoin",
+  "name": "COMP4142-Project-Backend",
   "version": "1.0.1",
   "description": "Simple Blockchain implementation in Javascript. For educational purposes only.",
   "keywords": [
@@ -17,15 +17,15 @@
   },
   "author": "Xavier Decuyper <hi@savjee.be>",
   "license": "MIT",
-  "repository": "github:SavjeeTutorials/SavjeeCoin",
+  "repository": "github:MattKaydy/COMP4142-Project-Backend",
   "bugs": {
-    "url": "https://github.com/SavjeeTutorials/SavjeeCoin/issues"
+    "url": "https://github.com/MattKaydy/COMP4142-Project-Backend/issues"
   },
-  "homepage": "https://github.com/SavjeeTutorials/SavjeeCoin",
+  "homepage": "https://github.com/MattKaydy/COMP4142-Project-Backend",
   "dependencies": {
+    "crypto-browserify": "^3.12.0",
     "debug": "^4.1.1",
-    "elliptic": "^6.5.4",
-    "savjeecoin": "^1.0.1"
+    "elliptic": "^6.5.4"
   },
   "devDependencies": {
     "coveralls": "^3.0.6",
