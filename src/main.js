@@ -2,6 +2,7 @@
 const { Blockchain, Transaction } = require('./blockchain');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
+const fs = require('fs');
 
 // Your private key goes here
 const myKey = ec.keyFromPrivate(
@@ -11,8 +12,21 @@ const myKey = ec.keyFromPrivate(
 // From that we can calculate your public key (which doubles as your wallet address)
 const myWalletAddress = myKey.getPublic('hex');
 
-// Create new instance of Blockchain class
+// Get blockchain from storage or create a new blockchain
 const savjeeCoin = new Blockchain();
+const dataDir = './data';
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
+if (fs.existsSync('./data/blockchain.json')) {
+  const blockchainData = JSON.parse(fs.readFileSync('./data/blockchain.json'));
+  savjeeCoin.chain = blockchainData.chain;
+  savjeeCoin.difficulty = blockchainData.difficulty;
+  savjeeCoin.pendingTransactions = blockchainData.pendingTransactions;
+  savjeeCoin.miningReward = blockchainData.miningReward;
+} else {
+  savjeeCoin.createGenesisBlock();
+}
 
 // Mine first block
 savjeeCoin.minePendingTransactions(myWalletAddress);
@@ -44,3 +58,7 @@ console.log(
 // Check if the chain is valid
 console.log();
 console.log('Blockchain valid?', savjeeCoin.isChainValid() ? 'Yes' : 'No');
+
+// fs.writeFileSync('./data/blockchain.json', util.inspect(savjeeCoin), 'utf-8');
+const data = JSON.stringify(savjeeCoin);
+fs.writeFileSync('./data/blockchain.json', data);

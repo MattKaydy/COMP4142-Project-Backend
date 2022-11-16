@@ -140,7 +140,8 @@ class Block {
 
 class Blockchain {
   constructor() {
-    this.chain = [this.createGenesisBlock()];
+    this.chain = [];
+    this.chainHeight = this.chain.length;
     this.difficulty = 2;
     this.pendingTransactions = [];
     this.miningReward = 100;
@@ -150,7 +151,7 @@ class Blockchain {
    * @returns {Block}
    */
   createGenesisBlock() {
-    return new Block(Date.parse('2017-01-01'), [], '0');
+    this.chain.push(new Block(Date.parse('2017-01-01'), [], '0'));
   }
 
   /**
@@ -220,7 +221,7 @@ class Blockchain {
 
     // Get all other pending transactions for the "from" wallet
     const pendingTxForWallet = this.pendingTransactions.filter(
-      tx => tx.fromAddress === transaction.fromAddress
+      (tx) => tx.fromAddress === transaction.fromAddress
     );
 
     // If the wallet has more pending transactions, calculate the total amount
@@ -228,7 +229,7 @@ class Blockchain {
     // transaction.
     if (pendingTxForWallet.length > 0) {
       const totalPendingAmount = pendingTxForWallet
-        .map(tx => tx.amount)
+        .map((tx) => tx.amount)
         .reduce((prev, curr) => prev + curr);
 
       const totalAmount = totalPendingAmount + transaction.amount;
