@@ -151,7 +151,7 @@ class Blockchain {
    * @returns {Block}
    */
   createGenesisBlock() {
-    this.chain.push(new Block(Date.parse('2017-01-01'), [], '0'));
+    return new Block(Date.parse('2017-01-01'), [], '0');
   }
 
   /**
