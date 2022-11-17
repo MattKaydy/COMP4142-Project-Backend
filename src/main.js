@@ -30,9 +30,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
 }
 const blockchainPath = './data/blockchain.json';
-if (fs.existsSync(blockchainPath)) {
-  savjeeCoin.constructBlockchain(blockchainPath);
-}
+savjeeCoin.constructBlockchain(blockchainPath);
 
 // Mine first block
 savjeeCoin.minePendingTransactions(myWalletAddress);
@@ -67,6 +65,5 @@ console.log(
 console.log();
 console.log('Blockchain valid?', savjeeCoin.isChainValid() ? 'Yes' : 'No');
 
-// fs.writeFileSync('./data/blockchain.json', util.inspect(savjeeCoin), 'utf-8');
-const data = JSON.stringify(savjeeCoin);
-fs.writeFileSync('./data/blockchain.json', data);
+// Save blockchain
+savjeeCoin.saveBlockchain();

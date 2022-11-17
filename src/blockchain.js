@@ -179,6 +179,10 @@ class Blockchain {
    * @param {*} blockchainPath
    */
   constructBlockchain(blockchainPath) {
+    if (!fs.existsSync(blockchainPath)) {
+      throw new Error('Cannot found blockchain JSON in ${blockchainPath}');
+    }
+
     const blockchainData = JSON.parse(fs.readFileSync(blockchainPath));
 
     // Get fields from JSON
@@ -222,6 +226,14 @@ class Blockchain {
       // Put a block to chain
       this.chain.push(blockObj);
     }
+  }
+
+  /**
+   * Save blockchain to JSON
+   */
+  saveBlockchain() {
+    const data = JSON.stringify(this);
+    fs.writeFileSync('./data/blockchain.json', data);
   }
 
   /**
