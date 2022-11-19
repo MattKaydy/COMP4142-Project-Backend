@@ -11,15 +11,15 @@ beforeEach(function() {
 describe('Block class', function() {
   describe('Constructor', function() {
     it('should correctly save parameters', function() {
-      assert.strict.equal(blockObj.previousHash, 'a1');
+      assert.strict.equal(blockObj.previousBlockHash, 'a1');
       assert.strict.equal(blockObj.timestamp, 1000);
       assert.strict.deepEqual(blockObj.transactions, [createSignedTx()]);
       assert.strict.equal(blockObj.nonce, 0);
     });
 
-    it('should correctly save parameters, without giving "previousHash"', function() {
+    it('should correctly save parameters, without giving "previousBlockHash"', function() {
       blockObj = new Block(1000, [createSignedTx()]);
-      assert.strict.equal(blockObj.previousHash, '');
+      assert.strict.equal(blockObj.previousBlockHash, '');
       assert.strict.equal(blockObj.timestamp, 1000);
       assert.strict.deepEqual(blockObj.transactions, [createSignedTx()]);
       assert.strict.equal(blockObj.nonce, 0);
