@@ -21,6 +21,7 @@ const myKey = ec.keyFromPrivate(
 
 // From that we can calculate your public key (which doubles as your wallet address)
 const myWalletAddress = myKey.getPublic('hex');
+console.log(myWalletAddress);
 
 // Get blockchain from storage and construct it
 const savjeeCoin = new Blockchain();
