@@ -2,17 +2,6 @@
 const { Blockchain, Transaction } = require('./blockchain');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
-const fs = require('fs');
-// const mongoose = require('mongoose');
-
-// Connect to the database
-// mongoose.connect(
-//   'mongodb://localhost:27017/crypto',
-//   { useNewUrlParser: true, useUnifiedTopology: true },
-//   () => {
-//     console.log('DB connected');
-//   }
-// );
 
 // Your private key goes here
 const myKey = ec.keyFromPrivate(
@@ -21,18 +10,9 @@ const myKey = ec.keyFromPrivate(
 
 // From that we can calculate your public key (which doubles as your wallet address)
 const myWalletAddress = myKey.getPublic('hex');
-console.log(myWalletAddress);
 
-// Get blockchain from storage and construct it
+// Create new instance of Blockchain class
 const savjeeCoin = new Blockchain();
-const dataDir = './data';
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
-}
-const blockchainPath = './data/blockchain.json';
-if (fs.existsSync(blockchainPath)) {
-  savjeeCoin.constructBlockchain(blockchainPath);
-}
 
 // Mine first block
 savjeeCoin.minePendingTransactions(myWalletAddress);
@@ -54,8 +34,6 @@ savjeeCoin.addTransaction(tx2);
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
 console.log();
-console.log(savjeeCoin.chain);
-console.log();
 console.log(
   `Balance of xavier is ${savjeeCoin.getBalanceOfAddress(myWalletAddress)}`
 );
@@ -66,7 +44,3 @@ console.log(
 // Check if the chain is valid
 console.log();
 console.log('Blockchain valid?', savjeeCoin.isChainValid() ? 'Yes' : 'No');
-
-// fs.writeFileSync('./data/blockchain.json', util.inspect(savjeeCoin), 'utf-8');
-const data = JSON.stringify(savjeeCoin);
-fs.writeFileSync('./data/blockchain.json', data);
