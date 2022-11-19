@@ -87,10 +87,10 @@ class Block {
    * @param {Transaction[]} transactions
    * @param {string} previousBlockHash
    */
-  constructor(timestamp, transactions, previousHash = '') {
+  constructor(timestamp, transactions, previousBlockHash = '') {
     this.index=0;
     this.timestamp = timestamp;
-    this.previousHash = previousHash;
+    this.previousBlockHash = previousBlockHash;
     this.hash = this.calculateHash();
     this.difficulty=0;
     this.nonce = 0;
