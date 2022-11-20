@@ -2,7 +2,7 @@
 const crypto = require('crypto');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
-const debug = require('debug')('savjeecoin:blockchain');
+const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 
 class Transaction {
   /**
@@ -76,7 +76,7 @@ class Block {
   /**
    * @param {number} timestamp
    * @param {Transaction[]} transactions
-   * @param {string} previousHash
+   * @param {string} previousBlockHash
    */
   constructor(timestamp, transactions, previousBlockHash = '') {
     this.previousBlockHash = previousBlockHash;
@@ -96,7 +96,7 @@ class Block {
     return crypto
       .createHash('sha256')
       .update(
-        this.previousHash +
+        this.previousBlockHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
           this.nonce
@@ -220,7 +220,7 @@ class Blockchain {
 
     // Get all other pending transactions for the "from" wallet
     const pendingTxForWallet = this.pendingTransactions.filter(
-      tx => tx.fromAddress === transaction.fromAddress
+      (tx) => tx.fromAddress === transaction.fromAddress
     );
 
     // If the wallet has more pending transactions, calculate the total amount
@@ -228,7 +228,7 @@ class Blockchain {
     // transaction.
     if (pendingTxForWallet.length > 0) {
       const totalPendingAmount = pendingTxForWallet
-        .map(tx => tx.amount)
+        .map((tx) => tx.amount)
         .reduce((prev, curr) => prev + curr);
 
       const totalAmount = totalPendingAmount + transaction.amount;
@@ -312,7 +312,7 @@ class Blockchain {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
-      if (previousBlock.hash !== currentBlock.previousHash) {
+      if (previousBlock.hash !== currentBlock.previousBlockHash) {
         return false;
       }
 

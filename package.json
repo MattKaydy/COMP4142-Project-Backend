@@ -17,11 +17,11 @@
   },
   "author": "Xavier Decuyper <hi@savjee.be>",
   "license": "MIT",
-  "repository": "github:SavjeeTutorials/SavjeeCoin",
+  "repository": "MattKaydy/COMP4142-Project-Backend",
   "bugs": {
-    "url": "https://github.com/SavjeeTutorials/SavjeeCoin/issues"
+    "url": "https://github.com/MattKaydy/COMP4142-Project-Backend/issues"
   },
-  "homepage": "https://github.com/SavjeeTutorials/SavjeeCoin",
+  "homepage": "https://github.com/MattKaydy/COMP4142-Project-Backend",
   "dependencies": {
     "debug": "^4.1.1",
     "elliptic": "^6.5.4"
