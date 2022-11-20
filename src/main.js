@@ -132,6 +132,8 @@ savjeeCoin.addTransaction(tx12);
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
 console.log();
+console.log(savjeeCoin.chain);
+console.log();
 console.log(
   `Balance of xavier is ${savjeeCoin.getBalanceOfAddress(myWalletAddress)}`
 );

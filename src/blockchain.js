@@ -333,7 +333,7 @@ class Blockchain {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
-      if (previousBlock.hash !== currentBlock.previousHash) {
+      if (previousBlock.hash !== currentBlock.previousBlockHash) {
         return false;
       }
 
