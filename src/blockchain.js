@@ -2,8 +2,7 @@
 const crypto = require('crypto');
 const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
-const debug = require('debug')('COMP4142-Project-Backend:blockchain');
-const fs = require('fs');
+const debug = require('debug')('savjeecoin:blockchain');
 
 class Transaction {
   /**
@@ -16,14 +15,6 @@ class Transaction {
     this.toAddress = toAddress;
     this.amount = amount;
     this.timestamp = Date.now();
-  }
-
-  /**
-   *
-   * @param {string} timestamp
-   */
-  setTimestamp(timestamp) {
-    this.timestamp = timestamp;
   }
 
   /**
@@ -85,7 +76,7 @@ class Block {
   /**
    * @param {number} timestamp
    * @param {Transaction[]} transactions
-   * @param {string} previousBlockHash
+   * @param {string} previousHash
    */
   constructor(timestamp, transactions, previousBlockHash = '') {
     this.previousBlockHash = previousBlockHash;
@@ -94,15 +85,6 @@ class Block {
     this.transactions = transactions;
     this.difficulty=0;
     this.nonce = 0;
-    this.hash = this.calculateHash();
-  }
-
-  /**
-   *
-   * @param {int} nonce
-   */
-  setNonce(nonce) {
-    this.nonce = nonce;
     this.hash = this.calculateHash();
   }
 
@@ -116,7 +98,7 @@ class Block {
     return crypto
       .createHash('sha256')
       .update(
-        this.previousBlockHash +
+        this.previousHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
           this.nonce
@@ -165,7 +147,6 @@ class Block {
 class Blockchain {
   constructor() {
     this.chain = [this.createGenesisBlock()];
-    this.chainHeight = this.chain.length;
     this.difficulty = 2;
     this.pendingTransactions = [];
     this.miningReward = 100;
@@ -178,58 +159,6 @@ class Blockchain {
    */
   createGenesisBlock() {
     return new Block(Date.parse('2017-01-01'), [], '0');
-  }
-
-  /**
-   *
-   * Construct blcokchain object from JSON with JSON path.
-   *
-   * @param {*} blockchainPath
-   */
-  constructBlockchain(blockchainPath) {
-    const blockchainData = JSON.parse(fs.readFileSync(blockchainPath));
-
-    // Get fields from JSON
-    this.difficulty = blockchainData.difficulty;
-    this.pendingTransactions = blockchainData.pendingTransactions;
-    this.miningReward = blockchainData.miningReward;
-
-    // Construct chain
-    const chain = blockchainData.chain;
-    for (let i = 1; i < chain.length; i++) {
-      // Each block of a chain. Ignored the Genesis block.
-      const block = chain[i];
-
-      // Each transaction of a block. Create transaction objects in a block
-      const transactiions = block.transactions;
-      const transactiionObjArray = [];
-      for (let i = 0; i < transactiions.length; i++) {
-        const transactiion = transactiions[i];
-        const transactionObj = new Transaction(
-          transactiion.fromAddress,
-          transactiion.toAddress,
-          transactiion.amount
-        );
-        transactionObj.setTimestamp(transactiion.timestamp);
-        if (transactiion.signature != null) {
-          transactionObj.signature = transactiion.signature;
-        }
-        if (transactionObj != null) {
-          transactiionObjArray.push(transactionObj);
-        }
-      }
-
-      // Create bock object
-      const blockObj = new Block(
-        block.timestamp,
-        transactiionObjArray,
-        block.previousBlockHash
-      );
-      blockObj.setNonce(block.nonce);
-
-      // Put a block to chain
-      this.chain.push(blockObj);
-    }
   }
 
   /**
@@ -312,7 +241,7 @@ class Blockchain {
 
     // Get all other pending transactions for the "from" wallet
     const pendingTxForWallet = this.pendingTransactions.filter(
-      (tx) => tx.fromAddress === transaction.fromAddress
+      tx => tx.fromAddress === transaction.fromAddress
     );
 
     // If the wallet has more pending transactions, calculate the total amount
@@ -320,7 +249,7 @@ class Blockchain {
     // transaction.
     if (pendingTxForWallet.length > 0) {
       const totalPendingAmount = pendingTxForWallet
-        .map((tx) => tx.amount)
+        .map(tx => tx.amount)
         .reduce((prev, curr) => prev + curr);
 
       const totalAmount = totalPendingAmount + transaction.amount;
@@ -404,18 +333,15 @@ class Blockchain {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
 
-      if (previousBlock.hash !== currentBlock.previousBlockHash) {
-        console.log('previousBlock.hash !== currentBlock.previousBlockHash');
+      if (previousBlock.hash !== currentBlock.previousHash) {
         return false;
       }
 
       if (!currentBlock.hasValidTransactions()) {
-        console.log('!currentBlock.hasValidTransactions()');
         return false;
       }
 
       if (currentBlock.hash !== currentBlock.calculateHash()) {
-        console.log('currentBlock.hash !== currentBlock.calculateHash()');
         return false;
       }
     }

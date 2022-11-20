@@ -1,5 +1,5 @@
 node_modules
 .vscode
-
-# ignore data
-/data
+coverage
+.nyc_output
+yarn.lockcoverage
