@@ -101,7 +101,9 @@ class Block {
         this.previousBlockHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
-          this.nonce
+          this.nonce+
+          this.index+
+          this.difficulty
       )
       .digest('hex');
   }
