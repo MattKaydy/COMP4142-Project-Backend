@@ -26,7 +26,8 @@
     "crypto-browserify": "^3.12.0",
     "debug": "^4.1.1",
     "elliptic": "^6.5.4",
-    "fs": "^0.0.1-security"
+    "mongodb": "^4.12.0",
+    "mongoose": "^6.7.2"
   },
   "devDependencies": {
     "coveralls": "^3.0.6",

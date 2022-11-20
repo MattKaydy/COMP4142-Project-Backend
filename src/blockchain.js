@@ -4,6 +4,9 @@ const EC = require('elliptic').ec;
 const ec = new EC('secp256k1');
 const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 const fs = require('fs');
+const BlockModel = require('../models/blockchain').block;
+const TransactionModel = require('../models/blockchain').transaction;
+// const BlockchainModel = require('../models/blockchain').blockchain;
 
 class Transaction {
   /**
@@ -15,11 +18,11 @@ class Transaction {
     this.fromAddress = fromAddress;
     this.toAddress = toAddress;
     this.amount = amount;
-    this.timestamp = Date.now();
+    this.timestamp = Date.now().toString();
   }
 
   /**
-   *
+   * Set tiemstamp
    * @param {string} timestamp
    */
   setTimestamp(timestamp) {
@@ -79,6 +82,18 @@ class Transaction {
     const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
     return publicKey.verify(this.calculateHash(), this.signature);
   }
+
+  async saveTransactionToDB() {
+    const transactionDB = new TransactionModel({
+      fromAddress: this.fromAddress,
+      toAddress: this.toAddress,
+      amount: this.amount,
+      timestamp: this.timestamp,
+      signature: this.signature,
+    });
+    const transactionFeedback = await transactionDB.save();
+    if (transactionFeedback === this) console.log('Added Transaction to DB');
+  }
 }
 
 class Block {
@@ -135,7 +150,6 @@ class Block {
       this.nonce++;
       this.hash = this.calculateHash();
     }
-
     debug(`Block mined: ${this.hash}`);
   }
 
@@ -153,6 +167,34 @@ class Block {
     }
 
     return true;
+  }
+
+  async saveBlockToDB() {
+    const transactionID = [];
+    for (let i = 0; i <= this.transactions.length; i++) {
+      if (typeof this.transactions[i] !== 'undefined') {
+        const transactionFromDB = await TransactionModel.findOne({
+          fromAddress: this.transactions[i].fromAddress,
+          toAddress: this.transactions[i].toAddress,
+          amount: this.transactions[i].amount,
+          timestamp: this.transactions[i].timestamp,
+        });
+
+        if (transactionFromDB !== null) {
+          transactionID.push(transactionFromDB.id);
+        }
+      }
+    }
+    // Add block to DB.
+    const blockDB = new BlockModel({
+      previousBlockHash: this.previousBlockHash,
+      timestamp: this.timestamp,
+      transactions: transactionID,
+      nonce: this.nonce,
+      hash: this.hash,
+    });
+    const blockFeedback = await blockDB.save();
+    if (blockFeedback === this) console.log('Added Block to DB');
   }
 }
 
@@ -178,9 +220,9 @@ class Blockchain {
    *
    * @param {*} blockchainPath
    */
-  constructBlockchain(blockchainPath) {
+  constructBlockchain_2(blockchainPath) {
     if (!fs.existsSync(blockchainPath)) {
-      throw new Error('Cannot found blockchain JSON in ${blockchainPath}');
+      throw new Error('Cannot found blockchain JSON');
     }
 
     const blockchainData = JSON.parse(fs.readFileSync(blockchainPath));
@@ -228,12 +270,74 @@ class Blockchain {
     }
   }
 
-  /**
-   * Save blockchain to JSON
-   */
-  saveBlockchain() {
-    const data = JSON.stringify(this);
-    fs.writeFileSync('./data/blockchain.json', data);
+  async constructBlockchain() {
+    try {
+      const blockchainData = [];
+
+      // Get first block from DB
+      let genesisBlock = await BlockModel.findOne({
+        previousBlockHash: '0',
+      }).exec();
+      if (genesisBlock == null) {
+        await this.saveGenesisBlockToDB();
+        genesisBlock = await BlockModel.findOne({
+          previousBlockHash: '0',
+        }).exec();
+      }
+      blockchainData.push(genesisBlock);
+
+      // Get blockchain from DB
+      let currentBlock = genesisBlock;
+      let nL = true;
+      while (nL) {
+        const nextBlock = await BlockModel.findOne({
+          previousBlockHash: currentBlock.hash,
+        }).exec();
+        if (nextBlock != null) {
+          blockchainData.push(nextBlock);
+          currentBlock = nextBlock;
+        } else nL = false;
+      }
+
+      // Modify the recerived models from DB.
+      for (let i = 1; i < blockchainData.length; i++) {
+        // Each block of a chain. Ignored the Genesis block.
+        const block = blockchainData[i];
+
+        // Each transaction of a block. Create transaction objects in a block
+        const transactiions = block.transactions;
+        const transactiionObjArray = [];
+        for (let i = 0; i < transactiions.length; i++) {
+          const transactiionID = transactiions[i];
+          const transactiion = await TransactionModel.findById(transactiionID);
+          const transactionObj = new Transaction(
+            transactiion.fromAddress,
+            transactiion.toAddress,
+            transactiion.amount
+          );
+          transactionObj.setTimestamp(transactiion.timestamp);
+          if (transactiion.signature != null) {
+            transactionObj.signature = transactiion.signature;
+          }
+          if (transactionObj != null) {
+            transactiionObjArray.push(transactionObj);
+          }
+        }
+
+        // Create bock object
+        const blockObj = new Block(
+          block.timestamp,
+          transactiionObjArray,
+          block.previousBlockHash
+        );
+        blockObj.setNonce(block.nonce);
+
+        // Put a block to chain
+        this.chain.push(blockObj);
+      }
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   /**
@@ -253,7 +357,7 @@ class Blockchain {
    *
    * @param {string} miningRewardAddress
    */
-  minePendingTransactions(miningRewardAddress) {
+  async minePendingTransactions(miningRewardAddress) {
     const rewardTx = new Transaction(
       null,
       miningRewardAddress,
@@ -262,7 +366,7 @@ class Blockchain {
     this.pendingTransactions.push(rewardTx);
 
     const block = new Block(
-      Date.now(),
+      Date.now().toString(),
       this.pendingTransactions,
       this.getLatestBlock().hash
     );
@@ -272,6 +376,10 @@ class Blockchain {
     this.chain.push(block);
 
     this.pendingTransactions = [];
+
+    // DB
+    await rewardTx.saveTransactionToDB();
+    await block.saveBlockToDB();
   }
 
   /**
@@ -324,6 +432,9 @@ class Blockchain {
 
     this.pendingTransactions.push(transaction);
     debug('transaction added: %s', transaction);
+
+    // DB
+    transaction.saveTransactionToDB();
   }
 
   /**
@@ -412,6 +523,11 @@ class Blockchain {
     }
 
     return true;
+  }
+
+  async saveGenesisBlockToDB() {
+    const block = this.chain[0];
+    await block.saveBlockToDB();
   }
 }
 
