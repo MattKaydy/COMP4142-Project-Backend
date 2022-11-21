@@ -85,7 +85,7 @@ class Block {
     this.transactions = transactions;
     this.difficulty=2;
     this.nonce = 0;
-    this.Root = 0;
+    this.root = 0;
     this.hash = this.calculateHash();
   }
 
@@ -104,7 +104,8 @@ class Block {
           JSON.stringify(this.transactions) +
           this.nonce+
           this.index+
-          this.difficulty
+          this.difficulty+
+          this.root
       )
       .digest('hex');
   }
@@ -118,7 +119,7 @@ class Block {
    mineBlock(index,difficulty,merkleRoot) {
     this.index=index;
     this.difficulty=difficulty;
-    this.Root=merkleRoot;
+    this.root=merkleRoot;
     while (
       this.hash.substring(0, difficulty) !== Array(difficulty + 1).join('0')
     ) {
