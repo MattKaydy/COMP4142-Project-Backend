@@ -80,12 +80,30 @@ class Block {
    */
   constructor(timestamp, transactions, previousBlockHash = '') {
     this.previousBlockHash = previousBlockHash;
-    this.index=0;
+    this.index = 0;
     this.timestamp = timestamp;
     this.transactions = transactions;
-    this.difficulty=2;
+    this.difficulty = 2;
     this.nonce = 0;
-    this.root = 0;
+    this.root = this.build_merkle_tree(this.padding(transactions)).hash;
+    this.hash = this.calculateHash();
+  }
+
+  /**
+   *
+   * @param {number} index
+   */
+  setIndex(index) {
+    this.index = index;
+    this.hash = this.calculateHash();
+  }
+
+  /**
+   *
+   * @param {number} difficulty
+   */
+  setDifficulty(difficulty) {
+    this.difficulty = difficulty;
     this.hash = this.calculateHash();
   }
 
@@ -102,9 +120,9 @@ class Block {
         this.previousBlockHash +
           this.timestamp +
           JSON.stringify(this.transactions) +
-          this.nonce+
-          this.index+
-          this.difficulty+
+          this.nonce +
+          this.index +
+          this.difficulty +
           this.root
       )
       .digest('hex');
@@ -116,21 +134,96 @@ class Block {
    *
    * @param {number} difficulty
    */
-   mineBlock(index,difficulty,merkleRoot) {
-    this.index=index;
-    this.difficulty=difficulty;
-    this.root=merkleRoot;
+  mineBlock() {
     while (
-      this.hash.substring(0, difficulty) !== Array(difficulty + 1).join('0')
+      this.hash.substring(0, this.difficulty) !==
+      Array(this.difficulty + 1).join('0')
     ) {
       this.nonce++;
       this.hash = this.calculateHash();
     }
 
     debug(`Block mined: ${this.hash}`);
-    this.end=Date.now()
+    this.end = Date.now();
   }
 
+  /**
+   * Takes all the pending transactions, padding before puts them in a Merkle Tree.
+   *  It add pad if the amount of transaction cannot struct a tree.
+   *
+   * @param {Object} Transactions
+   */
+
+  padding(Transactions) {
+    const size = Transactions.length;
+    if (size === 0) {
+      return [''];
+    }
+    const reducedSize = parseInt(Math.pow(2, parseInt(Math.log2(size))));
+
+    let padSize = 0;
+    if (reducedSize !== size) {
+      padSize = 2 * reducedSize - size;
+    }
+    for (let i = 0; i < padSize; i++) {
+      const pad = new Transaction(null, '', '');
+      Transactions.push(pad);
+    }
+    return Transactions;
+  }
+
+  /**
+   * After padding, takes all the pending transactions in a Merkle Tree and starts the
+   * tree process. Output the first node.
+   *
+   * @param {Object} Transactions
+   */
+  build_merkle_tree(Transactions) {
+    let nodes = [];
+
+    for (const tran of Transactions) {
+      const i = this.merkleNode(tran);
+      nodes.push(i);
+    }
+
+    while (nodes.length !== 1) {
+      const temp = [];
+      for (let node = 0; node < nodes.length; node += 2) {
+        const node1 = nodes[node];
+        const node2 = nodes[node + 1];
+        const concatHash = node1.hash + node2.hash;
+        const parent = this.merkleNode(concatHash);
+        parent.left = node1;
+        parent.right = node2;
+        temp.push(parent);
+      }
+      nodes = temp;
+    }
+    return nodes[0];
+  }
+
+  /**
+   * Input a transaction / a concat hash of two children nodes.
+   * SHA256 of them and output a node structure.
+   *
+   * @param {Object} Transactions
+   */
+  merkleNode(value) {
+    const left = '';
+    const right = '';
+    let hash = 0;
+    if (typeof value === 'string') {
+      hash = crypto.createHash('sha256').update(value).digest('hex');
+    } else {
+      hash = crypto
+        .createHash('sha256')
+        .update(
+          value.fromAddress + value.toAddress + value.amount + value.timestamp
+        )
+        .digest('hex');
+    }
+    return { left, right, value, hash };
+  }
 
   /**
    * Validates all the transactions inside this block (signature + hash) and
@@ -188,120 +281,37 @@ class Blockchain {
     );
     this.pendingTransactions.push(rewardTx);
 
-    this.index+=1;
-    
+    this.index += 1;
+
     const block = new Block(
       Date.now(),
       this.pendingTransactions,
       this.getLatestBlock().hash
     );
 
+    // Adjust diificulty
     let difficulty = this.getLatestBlock().difficulty;
-    
-    if (this.chain.length>11) {
+    if (this.chain.length > 11) {
       let accum = 0;
-        for (let i = this.chain.length; i >= this.chain.length-10; i--){
-          let blockTime = this.chain[i-1].timestamp - this.chain[i-2].timestamp;
-          accum += blockTime;
-        }
-        difficulty=parseInt((difficulty * (10 * 0.02 * 1000)) / accum);
-        //console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
-        console.log(parseInt(difficulty));
+      for (let i = this.chain.length; i >= this.chain.length - 10; i--) {
+        const blockTime =
+          this.chain[i - 1].timestamp - this.chain[i - 2].timestamp;
+        accum += blockTime;
+      }
+      difficulty = parseInt((difficulty * (10 * 0.02 * 1000)) / accum);
+      // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
+      console.log(parseInt(difficulty));
+      block.setIndex(this.chain.length);
+      block.setDifficulty(difficulty);
     }
-    
-    const listOfTransaction = this.padding(this.pendingTransactions)
-    let markleRootHash = this.build_merkle_tree(listOfTransaction).hash
-    
 
-    block.mineBlock(this.chain.length,difficulty,markleRootHash);
-    
+    block.mineBlock();
+
     debug('Block successfully mined!');
     this.chain.push(block);
 
     this.pendingTransactions = [];
   }
-
-  /**
-   * Takes all the pending transactions, padding before puts them in a Merkle Tree.
-   *  It add pad if the amount of transaction cannot struct a tree.
-   *
-   * @param {Object} Transactions
-   */
-
-  padding(Transactions){
-    let size = Transactions.length;
-    if (size == 0){
-      return ['']
-    }
-    let reduced_size =  parseInt(Math.pow(2,parseInt(Math.log2(size))));
-   
-    let pad_size = 0
-    if (reduced_size != size){
-      pad_size=2*reduced_size-size
-    }
-    for (let i = 0; i < pad_size; i++){
-      const pad = new Transaction(
-        null,
-        '',
-        ''
-      );
-      Transactions.push(pad);
-    }
-    return Transactions
-  }
-
-  /**
-   * After padding, takes all the pending transactions in a Merkle Tree and starts the
-   * tree process. Output the first node.
-   *
-   * @param {Object} Transactions
-   */
-  build_merkle_tree(Transactions){
-    let nodes = [];
-
-    for (const tran of Transactions){
-        const i = this.merkleNode(tran);
-        nodes.push(i);
-    }
-
-    while (nodes.length!=1){
-        const temp =[];
-        for (let node = 0; node < nodes.length;node+=2){
-            let node1=nodes[node]
-            let node2=nodes[node+1]
-            let concat_hash = node1.hash + node2.hash
-            const parent = this.merkleNode(concat_hash)
-            parent.left = node1;
-            parent.right = node2
-            temp.push(parent)
-        }
-        nodes=temp
-    }
-    return nodes[0]
-}
-  /** 
-   * Input a transaction / a concat hash of two children nodes.
-   * SHA256 of them and output a node structure.
-   *
-   * @param {Object} Transactions
-   */
-  merkleNode(value){
-    let left = "";
-    let right= "";
-    let hash=0;
-    if (typeof value === 'string'){
-      hash= crypto.createHash('sha256')
-      .update(value)
-      .digest('hex');
-    }
-    else{
-      hash =crypto
-      .createHash('sha256')
-      .update(value.fromAddress+value.toAddress+value.amount+value.timestamp)
-      .digest('hex');
-    }
-    return {left,right,value,hash}
-}
 
   /**
    * Add a new transaction to the list of pending transactions (to be added

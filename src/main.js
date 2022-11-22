@@ -14,16 +14,6 @@ const myWalletAddress = myKey.getPublic('hex');
 // Create new instance of Blockchain class
 const savjeeCoin = new Blockchain();
 
-//const dataDir = './data';
-//if (!fs.existsSync(dataDir)) {
-//  fs.mkdirSync(dataDir);
-//}
-/*const blockchainPath = './data/blockchain.json';
-if (fs.existsSync(blockchainPath)) {
-  savjeeCoin.constructBlockchain(blockchainPath);
-}*/
-
-
 // Mine first block
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
@@ -43,12 +33,10 @@ savjeeCoin.addTransaction(tx2);
 // Mine block
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
-
 // Create second transaction
 const tx3 = new Transaction(myWalletAddress, 'address1', 2);
 tx3.signTransaction(myKey);
 savjeeCoin.addTransaction(tx3);
-
 
 // Create second transaction
 const tx4 = new Transaction(myWalletAddress, 'address1', 2);
@@ -59,7 +47,6 @@ savjeeCoin.addTransaction(tx4);
 const tx5 = new Transaction(myWalletAddress, 'address1', 5);
 tx5.signTransaction(myKey);
 savjeeCoin.addTransaction(tx5);
-
 
 // Create second transaction
 const tx6 = new Transaction(myWalletAddress, 'address1', 5);
@@ -148,9 +135,6 @@ savjeeCoin.addTransaction(tx16);
 // Mine block
 savjeeCoin.minePendingTransactions(myWalletAddress);
 
-
-
-
 console.log();
 console.log(savjeeCoin.chain);
 console.log();
@@ -164,8 +148,3 @@ console.log(
 // Check if the chain is valid
 console.log();
 console.log('Blockchain valid?', savjeeCoin.isChainValid() ? 'Yes' : 'No');
-
-// fs.writeFileSync('./data/blockchain.json', util.inspect(savjeeCoin), 'utf-8');
-//const data = JSON.stringify(savjeeCoin);
-//fs.writeFileSync('./data/blockchain.json', data);
-
