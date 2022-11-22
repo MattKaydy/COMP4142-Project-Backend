@@ -24,7 +24,8 @@
   "homepage": "https://github.com/MattKaydy/COMP4142-Project-Backend",
   "dependencies": {
     "debug": "^4.1.1",
-    "elliptic": "^6.5.4"
+    "elliptic": "^6.5.4",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "coveralls": "^3.0.6",

@@ -1,30 +1,25 @@
+const express = require("express");
+var app = express();
+var router = express.Router();
 
+var portNumber = 12345;
 
-class Network {
+app.listen(portNumber, function () {
+  console.log('Example app listening on port 12345 !');
+});
 
-  // Build an hardcoded array with IP addresses
+app.post(
+  "/ask",
+  async (req, res, next) => {
 
-  // Send HTTP Post request to a list of hardcoded IP addresses for their blocks
-  sendBlockRequest() {
+    try {
+      console.log("Successfully returned POST request")
+      // Return the latest block in the ch
 
-
+      return res.status(200).json("success");
+    } catch (err) {
+      console.log(err);
+      return res.sendStatus(500);
+    }
   }
-
-
-  // Receive HTTP Post request, send my blocks to the requester
-  listenForRequest() {
-
-    var http = require('http');
-    http.createServer(function (req, res) {
-
-      //When receive request, send something here:
-    res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.write('Hello World!');
-    res.end();
-        
-
-  }).listen(8080);  
-
-  }
-
-}
+);
