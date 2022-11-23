@@ -446,15 +446,23 @@ class Blockchain {
 
     // Adjust diificulty
     let difficulty = this.getLatestBlock().difficulty;
-    if (this.chain.length > 11) {
+    if (this.chain.length > 12) {
       let accum = 0;
       for (let i = this.chain.length; i >= this.chain.length - 10; i--) {
         const blockTime =
           this.chain[i - 1].timestamp - this.chain[i - 2].timestamp;
         accum += blockTime;
       }
-      difficulty = parseInt((difficulty * (10 * 0.02 * 1000)) / accum);
+      console.log("Accum:"+accum);
+      
+      difficulty = parseInt(difficulty * accum / (10 * 60 * 1000));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
+      if (difficulty == 0) {
+        difficulty = 1;
+      }
+      if (difficulty > 7) {
+        difficulty = 6;
+      }
       console.log(parseInt(difficulty));
       block.setDifficulty(difficulty);
     }
