@@ -62,7 +62,6 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 4) {
       console.clear();
-
       targetAddress = prompt('Enter sender address: ');
       transferCost = prompt('Enter money to transfer: ');
       const tx1 = new Transaction(
@@ -89,7 +88,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
 
       // Post a mined block to peers
       const data = {
-        url: 'http://localhost:2222/postminedblock',
+        url: 'http://localhost:1111/postminedblock',
         json: true,
         body: savjeeCoin.getLatestBlock(),
       };
@@ -126,10 +125,10 @@ function sleep(ms) {
   });
 }
 
-connect('mongodb://localhost:27017/crypto');
+connect('mongodb://localhost:27017/crypto_2');
 
 // Listen to port
-const portNumber = 1111;
+const portNumber = 2222;
 app.listen(portNumber, function () {
   console.log('Listening on port ' + portNumber);
 });
@@ -149,7 +148,7 @@ savjeeCoin.constructBlockchain();
 
 // Post current block.
 const data = {
-  url: 'http://localhost:2222/postcurrentblock',
+  url: 'http://localhost:1111/postcurrentblock',
   json: true,
   body: savjeeCoin.getLatestBlock(),
 };

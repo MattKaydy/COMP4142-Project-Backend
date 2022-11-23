@@ -5,9 +5,10 @@ const ec = new EC('secp256k1');
 const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
-const NodeCache = require( "node-cache" ); 
+const NodeCache = require('node-cache');
 const myCache = new NodeCache();
 const { connect } = require('./mongoUtil');
+const request = require('request');
 
 class Transaction {
   /**
@@ -110,7 +111,7 @@ class Block {
     this.hash = this.calculateHash();
     this.difficulty = 2;
     this.nonce = 0;
-    this.root = this.build_merkle_tree(this.padding(transactions)).hash; 
+    this.root = this.build_merkle_tree(this.padding(transactions)).hash;
     this.transactions = transactions;
   }
 
@@ -412,6 +413,49 @@ class Blockchain {
     }
   }
 
+  async blockchainJSONToDB(blockchainJSON) {
+    // CLear blockchain from DB
+    BlockModel.remove({});
+    TransactionModel.remove({});
+
+    // Modify the recerived models from DB.
+    for (let i = 1; i < blockchainJSON.length; i++) {
+      // Each block of a chain. Ignored the Genesis block.
+      const block = blockchainJSON[i];
+
+      // Put transactions to DB.
+      const transactiions = block.transactions;
+      for (let i = 0; i < transactiions.length; i++) {
+        const transactionObj = new Transaction(
+          transactiions[i].fromAddress,
+          transactiions[i].toAddress,
+          transactiions[i].amount
+        );
+        transactionObj.setTimestamp(transactiions[i].timestamp);
+        if (transactiions[i].signature != null) {
+          transactionObj.signature = transactiions[i].signature;
+        }
+        if (transactionObj != null) {
+          transactionObj.saveTransactionToDB();
+        }
+      }
+
+      // Create bock object
+      const blockObj = new Block(
+        block.timestamp,
+        block.transactions,
+        block.previousBlockHash
+      );
+      blockObj.setIndex(block.index);
+      blockObj.setDifficulty(block.difficulty);
+      blockObj.setNonce(block.nonce);
+      blockObj.setRoot(block.root);
+
+      // Put a block to DB
+      blockObj.saveBlockToDB();
+    }
+  }
+
   /**
    * Returns the latest block on our chain. Useful when you want to create a
    * new Block and you need the hash of the previous Block.
@@ -453,9 +497,9 @@ class Blockchain {
           this.chain[i - 1].timestamp - this.chain[i - 2].timestamp;
         accum += blockTime;
       }
-      console.log("Accum:"+accum);
-      
-      difficulty = parseInt(difficulty * accum / (10 * 60 * 1000));
+      console.log('Accum:' + accum);
+
+      difficulty = parseInt((difficulty * accum) / (10 * 60 * 1000));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
       if (difficulty == 0) {
         difficulty = 1;
@@ -640,28 +684,23 @@ class Blockchain {
   }
 
   saveDataToCache() {
-    var data = true;
+    let data = true;
 
-    data = myCache.set("Height", this.chain.length, 0);
-    data = myCache.set("NodeList", this.chain, 0);
-    data = myCache.set("UTXO", this.pendingTransactions, 0);
-    
-    if (data == false) {
+    data = myCache.set('Height', this.chain.length, 0);
+    data = myCache.set('NodeList', this.chain, 0);
+    data = myCache.set('UTXO', this.pendingTransactions, 0);
+
+    if (data === false) {
       console.log('Error occuerd in writing cache');
     }
-
-    
-
   }
 
   getDataFromCache(key) {
     if (myCache.has(key)) {
-      var value = myCache.take(key)
+      const value = myCache.take(key);
     }
     return value;
-
   }
-
 }
 
 module.exports.Blockchain = Blockchain;
