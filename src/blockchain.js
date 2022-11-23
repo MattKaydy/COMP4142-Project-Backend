@@ -9,6 +9,7 @@ const NodeCache = require('node-cache');
 const myCache = new NodeCache();
 const { connect } = require('./mongoUtil');
 const request = require('request');
+const { Console } = require('console');
 
 class Transaction {
   /**
@@ -415,8 +416,11 @@ class Blockchain {
 
   async blockchainJSONToDB(blockchainJSON) {
     // CLear blockchain from DB
-    BlockModel.remove({});
-    TransactionModel.remove({});
+    console.log("Running blockchainJSONtoDB");
+    BlockModel.collection.drop();
+    TransactionModel.collection.drop();
+    this.chain = [this.createGenesisBlock()];
+    this.transaction = [];
 
     // Modify the recerived models from DB.
     for (let i = 1; i < blockchainJSON.length; i++) {

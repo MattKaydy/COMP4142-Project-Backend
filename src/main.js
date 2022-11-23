@@ -78,7 +78,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       transferCost = prompt('Enter money to transfer: ');
       const tx1 = new Transaction(
         myWalletAddress,
-        'address2',
+        targetAddress,
         Number(transferCost)
       );
       tx1.signTransaction(myKey);
@@ -190,13 +190,17 @@ request.post(data, function (error, response, body) {
       savjeeCoin.chain.length < blockchainFromPeer.length
     ) {
       console.log('Synchronising blockchain...');
-      savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
-      savjeeCoin.constructBlockchain();
+      synchronizeBlockchain(blockchainFromPeer);
       console.log('Synchronised blockchain...');
     }
   }
 });
 
+async function synchronizeBlockchain(blockchainFromPeer)
+{
+    await savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
+    await savjeeCoin.constructBlockchain();
+}
 // receive current block POST
 app.post(
   '/postcurrentblock',

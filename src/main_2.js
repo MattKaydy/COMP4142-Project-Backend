@@ -78,7 +78,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       transferCost = prompt('Enter money to transfer: ');
       const tx1 = new Transaction(
         myWalletAddress,
-        'address2',
+        targetAddress,
         Number(transferCost)
       );
       tx1.signTransaction(myKey);
@@ -106,22 +106,25 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       };
       console.log(data.body);
       request.post(data, function (error, response, body) {
-        console.log('Post mined block to peers: Success');
+        console.log('Post current block to peers: Success');
         if (!error && response.statusCode === 200) {
-          console.log('Peer receive mined block: Success');
-          // If peer received invalid block, Synchronised the blockchain.
           const blockchainFromPeer = response.body;
           if (
             blockchainFromPeer != null &&
             savjeeCoin.chain.length < blockchainFromPeer.length
           ) {
             console.log('Synchronising blockchain...');
-            savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
-            savjeeCoin.constructBlockchain();
+            synchronizeBlockchain(blockchainFromPeer);
             console.log('Synchronised blockchain...');
           }
         }
       });
+      
+      async function synchronizeBlockchain(blockchainFromPeer)
+      {
+          await savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
+          await savjeeCoin.constructBlockchain();
+      }
 
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 7) {
@@ -163,8 +166,9 @@ app.use(function (req, res, next) {
 });
 
 // Your private key goes here
+// Public: 049ba803d2a68cd1c67728263a5e6fbe0fd191e298c355b10ebb46b42a12d434a565b09d0ae640ed8032feefebcf55c9e51cfe8f865efebe220b87f05f089a759c
 const myKey = ec.keyFromPrivate(
-  '7c4c45907dec40c91bab3480c39032e90049f1a44f3e18c3e07c23e3273995cf'
+  'ab1743698628cfec5de5936c98c3ea4935c03d5f71a39901a2e86ece4c8a31d8'
 );
 
 // From that we can calculate your public key (which doubles as your wallet address)
@@ -250,7 +254,6 @@ app.post(
         transactiionObjArray,
         block.previousBlockHash
       );
-
       blockObj.setIndex(block.index);
       blockObj.setDifficulty(block.difficulty);
       blockObj.setNonce(block.nonce);
