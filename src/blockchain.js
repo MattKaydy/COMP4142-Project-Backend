@@ -103,14 +103,14 @@ class Block {
    * @param {string} previousBlockHash
    */
   constructor(timestamp, transactions, previousBlockHash = '') {
-    this.previousBlockHash = previousBlockHash;
     this.index = 0;
     this.timestamp = timestamp;
-    this.transactions = transactions;
+    this.previousBlockHash = previousBlockHash;
+    this.hash = this.calculateHash();
     this.difficulty = 2;
     this.nonce = 0;
-    this.root = this.build_merkle_tree(this.padding(transactions)).hash;
-    this.hash = this.calculateHash();
+    this.root = this.build_merkle_tree(this.padding(transactions)).hash; 
+    this.transactions = transactions;
   }
 
   /**
