@@ -7,6 +7,7 @@ const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
 const NodeCache = require( "node-cache" ); 
 const myCache = new NodeCache();
+const { connect } = require('./mongoUtil');
 
 class Transaction {
   /**
@@ -465,7 +466,7 @@ class Blockchain {
 
     this.pendingTransactions = [];
 
-    saveDataToCache();
+    this.saveDataToCache();
 
     // DB
     await rewardTx.saveTransactionToDB();
@@ -525,7 +526,7 @@ class Blockchain {
 
     // DB
     transaction.saveTransactionToDB();
-    saveDataToCache();
+    this.saveDataToCache();
   }
 
   /**
