@@ -40,6 +40,10 @@ const blockSchema = mongoose.Schema({
       ref: 'transaction',
     },
   ],
+  difficulty: {
+    type: Number,
+    required: true,
+  },
   nonce: {
     type: Number,
     required: true,

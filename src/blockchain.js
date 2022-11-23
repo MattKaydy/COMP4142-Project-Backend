@@ -139,6 +139,15 @@ class Block {
   }
 
   /**
+   *
+   * @param {string} root
+   */
+  setRoot(root) {
+    this.root = root;
+    this.hash = this.calculateHash();
+  }
+
+  /**
    * Returns the SHA256 of this block (by processing all the data stored
    * inside this block)
    *
@@ -184,8 +193,9 @@ class Block {
    * @param {Object} Transactions
    */
 
-  padding(Transactions) {
-    const size = Transactions.length;
+  padding(transactions) {
+    const tmpTransactions = transactions.slice();
+    const size = tmpTransactions.length;
     if (size === 0) {
       return [''];
     }
@@ -197,9 +207,9 @@ class Block {
     }
     for (let i = 0; i < padSize; i++) {
       const pad = new Transaction(null, '', '');
-      Transactions.push(pad);
+      tmpTransactions.push(pad);
     }
-    return Transactions;
+    return tmpTransactions;
   }
 
   /**
@@ -293,6 +303,7 @@ class Block {
       index: this.index,
       timestamp: this.timestamp,
       transactions: transactionID,
+      difficulty: this.difficulty,
       nonce: this.nonce,
       root: this.root,
       hash: this.hash,
@@ -356,6 +367,15 @@ class Blockchain {
         for (let i = 0; i < transactiions.length; i++) {
           const transactiionID = transactiions[i];
           const transactiion = await TransactionModel.findById(transactiionID);
+          if (transactiion == null) {
+            console.log(
+              'Error: Cannot find transaction when constructing blockchain. In block:' +
+                block.index +
+                ' transaction:' +
+                transactiionID
+            );
+            continue;
+          }
           const transactionObj = new Transaction(
             transactiion.fromAddress,
             transactiion.toAddress,
@@ -376,7 +396,10 @@ class Blockchain {
           transactiionObjArray,
           block.previousBlockHash
         );
+        blockObj.setIndex(block.index);
+        blockObj.setDifficulty(block.difficulty);
         blockObj.setNonce(block.nonce);
+        blockObj.setRoot(block.root);
 
         // Put a block to chain
         this.chain.push(blockObj);
@@ -570,14 +593,26 @@ class Blockchain {
       const previousBlock = this.chain[i - 1];
 
       if (previousBlock.hash !== currentBlock.previousBlockHash) {
+        console.log(
+          'Error: previousBlock.hash !== currentBlock.previousBlockHash. Index:' +
+            currentBlock.index
+        );
         return false;
       }
 
       if (!currentBlock.hasValidTransactions()) {
+        console.log(
+          'Error: !currentBlock.hasValidTransactions(). Index:' +
+            currentBlock.index
+        );
         return false;
       }
 
       if (currentBlock.hash !== currentBlock.calculateHash()) {
+        console.log(
+          'Error: currentBlock.hash !== currentBlock.calculateHash(). Index:' +
+            currentBlock.index
+        );
         return false;
       }
     }
