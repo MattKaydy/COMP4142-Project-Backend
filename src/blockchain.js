@@ -5,6 +5,8 @@ const ec = new EC('secp256k1');
 const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
+const NodeCache = require( "node-cache" ); 
+const myCache = new NodeCache();
 
 class Transaction {
   /**
@@ -463,6 +465,8 @@ class Blockchain {
 
     this.pendingTransactions = [];
 
+    saveDataToCache();
+
     // DB
     await rewardTx.saveTransactionToDB();
     await block.saveBlockToDB();
@@ -521,6 +525,7 @@ class Blockchain {
 
     // DB
     transaction.saveTransactionToDB();
+    saveDataToCache();
   }
 
   /**
@@ -624,6 +629,30 @@ class Blockchain {
     const block = this.chain[0];
     await block.saveBlockToDB();
   }
+
+  saveDataToCache() {
+    var data = true;
+
+    data = myCache.set("Height", this.chain.length, 0);
+    data = myCache.set("NodeList", this.chain, 0);
+    data = myCache.set("UTXO", this.pendingTransactions, 0);
+    
+    if (data == false) {
+      console.log('Error occuerd in writing cache');
+    }
+
+    
+
+  }
+
+  getDataFromCache(key) {
+    if (myCache.has(key)) {
+      var value = myCache.take(key)
+    }
+    return value;
+
+  }
+
 }
 
 module.exports.Blockchain = Blockchain;

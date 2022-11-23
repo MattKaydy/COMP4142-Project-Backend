@@ -156,6 +156,18 @@ async function main() {
   console.log();
   console.log('Blockchain valid?', savjeeCoin.isChainValid() ? 'Yes' : 'No');
   const x = 1;
+
+  savjeeCoin.saveDataToCache();
+
+  
+
+  console.log('Blockchain Height: ' + savjeeCoin.getDataFromCache("Height"));
+  console.log('Blockchain NodeList: ');
+  console.log(savjeeCoin.getDataFromCache("NodeList"));
+  console.log('UTXO: ')
+  savjeeCoin.getDataFromCache("UTXO");
+
+
 }
 
 main();
