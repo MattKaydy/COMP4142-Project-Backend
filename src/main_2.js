@@ -7,6 +7,7 @@ const prompt = require('prompt-sync')();
 const express = require('express');
 const app = express();
 const request = require('request');
+const bodyParser = require('body-parser');
 
 async function main(myKey, myWalletAddress, savjeeCoin) {
   let isPromptDone = false;
@@ -62,6 +63,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 4) {
       console.clear();
+
       targetAddress = prompt('Enter sender address: ');
       transferCost = prompt('Enter money to transfer: ');
       const tx1 = new Transaction(
@@ -102,8 +104,10 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
             blockchainFromPeer != null &&
             savjeeCoin.chain.length < blockchainFromPeer.length
           ) {
+            console.log('Synchronising blockchain...');
             savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
             savjeeCoin.constructBlockchain();
+            console.log('Synchronised blockchain...');
           }
         }
       });
@@ -126,6 +130,8 @@ function sleep(ms) {
 }
 
 connect('mongodb://localhost:27017/crypto_2');
+
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Listen to port
 const portNumber = 2222;
@@ -160,54 +166,64 @@ request.post(data, function (error, response, body) {
       blockchainFromPeer != null &&
       savjeeCoin.chain.length < blockchainFromPeer.length
     ) {
+      console.log('Synchronising blockchain...');
       savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
       savjeeCoin.constructBlockchain();
+      console.log('Synchronised blockchain...');
     }
   }
 });
 
 // receive current block POST
-app.post('/postcurrentblock', async (req, res, next) => {
-  try {
-    console.log('Receive post current block: Success');
-    const blockFromPeer = req.body;
-    console.log(req);
-    if (blockFromPeer.hash !== savjeeCoin.getLatestBlock().hash) {
-      return res.status(200).send(savjeeCoin.chain);
+app.post(
+  '/postcurrentblock',
+  express.urlencoded({ extended: true }),
+  async (req, res, next) => {
+    try {
+      console.log('Receive post current block: Success');
+      const blockFromPeer = req.body;
+      if (blockFromPeer.hash !== savjeeCoin.getLatestBlock().hash) {
+        return res.status(200).send(JSON.stringify(savjeeCoin.chain));
+      }
+      return res.status(200);
+    } catch (err) {
+      console.log(err);
+      return res.sendStatus(500);
     }
-    return res.status(200);
-  } catch (err) {
-    console.log(err);
-    return res.sendStatus(500);
   }
-});
+);
 
 // receive mined block from peer
-app.post('/postminedblock', async (req, res, next) => {
-  console.log('Received Peer mined block.');
-  try {
-    const block = req.body;
+app.post(
+  '/postminedblock',
+  express.urlencoded({ extended: true }),
+  async (req, res, next) => {
+    console.log('Received Peer mined block.');
+    try {
+      const block = req.body;
 
-    // Create Block object
-    const blockObj = new Block(
-      block.timestamp,
-      block.transactions,
-      block.previousBlockHash
-    );
-    blockObj.setIndex(block.index);
-    blockObj.setDifficulty(block.difficulty);
-    blockObj.setNonce(block.nonce);
-    blockObj.setRoot(block.root);
+      console.log(block);
+      // Create Block object
+      const blockObj = new Block(
+        block.timestamp,
+        block.transactions,
+        block.previousBlockHash
+      );
+      blockObj.setIndex(block.index);
+      blockObj.setDifficulty(block.difficulty);
+      blockObj.setNonce(block.nonce);
+      blockObj.setRoot(block.root);
 
-    if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock.hash) {
-      savjeeCoin.chain.push(blockObj);
-      blockObj.saveBlockToDB();
+      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock.hash) {
+        savjeeCoin.chain.push(blockObj);
+        blockObj.saveBlockToDB();
+      }
+      return res.status(200);
+    } catch (err) {
+      console.log(err);
+      return res.sendStatus(500);
     }
-    return res.status(200);
-  } catch (err) {
-    console.log(err);
-    return res.sendStatus(500);
   }
-});
+);
 
 main(myKey, myWalletAddress, savjeeCoin);

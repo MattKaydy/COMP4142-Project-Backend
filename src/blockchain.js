@@ -204,7 +204,7 @@ class Block {
       return [''];
     }
     const reducedSize = parseInt(Math.pow(2, parseInt(Math.log2(size))));
-
+    7;
     let padSize = 0;
     if (reducedSize !== size) {
       padSize = 2 * reducedSize - size;
