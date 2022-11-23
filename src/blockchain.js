@@ -5,8 +5,9 @@ const ec = new EC('secp256k1');
 const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
-const NodeCache = require( "node-cache" ); 
+const NodeCache = require('node-cache');
 const myCache = new NodeCache();
+const request = require('request');
 
 class Transaction {
   /**
@@ -109,7 +110,7 @@ class Block {
     this.hash = this.calculateHash();
     this.difficulty = 2;
     this.nonce = 0;
-    this.root = this.build_merkle_tree(this.padding(transactions)).hash; 
+    this.root = this.build_merkle_tree(this.padding(transactions)).hash;
     this.transactions = transactions;
   }
 
@@ -411,6 +412,61 @@ class Blockchain {
     }
   }
 
+  async blockchainJSONToDB(blockchainJSON) {
+    // CLear blockchain from DB
+    BlockModel.remove({}, callback);
+    TransactionModel.remove({}, callback);
+
+    // Modify the recerived models from DB.
+    for (let i = 1; i < blockchainJSON.length; i++) {
+      // Each block of a chain. Ignored the Genesis block.
+      const block = blockchainJSON[i];
+
+      // Each transaction of a block. Create transaction objects in a block
+      const transactiions = block.transactions;
+      const transactiionObjArray = [];
+      for (let i = 0; i < transactiions.length; i++) {
+        const transactiionID = transactiions[i];
+        const transactiion = await TransactionModel.findById(transactiionID);
+        if (transactiion == null) {
+          console.log(
+            'Error: Cannot find transaction when constructing blockchain. In block:' +
+              block.index +
+              ' transaction:' +
+              transactiionID
+          );
+          continue;
+        }
+        const transactionObj = new Transaction(
+          transactiion.fromAddress,
+          transactiion.toAddress,
+          transactiion.amount
+        );
+        transactionObj.setTimestamp(transactiion.timestamp);
+        if (transactiion.signature != null) {
+          transactionObj.signature = transactiion.signature;
+        }
+        if (transactionObj != null) {
+          transactionObj.saveTransactionToDB();
+          transactiionObjArray.push(transactionObj);
+        }
+      }
+
+      // Create bock object
+      const blockObj = new Block(
+        block.timestamp,
+        transactiionObjArray,
+        block.previousBlockHash
+      );
+      blockObj.setIndex(block.index);
+      blockObj.setDifficulty(block.difficulty);
+      blockObj.setNonce(block.nonce);
+      blockObj.setRoot(block.root);
+
+      // Put a block to chain
+      blockObj.saveBlockToDB();
+  }
+
   /**
    * Returns the latest block on our chain. Useful when you want to create a
    * new Block and you need the hash of the previous Block.
@@ -465,7 +521,7 @@ class Blockchain {
 
     this.pendingTransactions = [];
 
-    saveDataToCache();
+    this.saveDataToCache();
 
     // DB
     await rewardTx.saveTransactionToDB();
@@ -631,28 +687,23 @@ class Blockchain {
   }
 
   saveDataToCache() {
-    var data = true;
+    let data = true;
 
-    data = myCache.set("Height", this.chain.length, 0);
-    data = myCache.set("NodeList", this.chain, 0);
-    data = myCache.set("UTXO", this.pendingTransactions, 0);
-    
-    if (data == false) {
+    data = myCache.set('Height', this.chain.length, 0);
+    data = myCache.set('NodeList', this.chain, 0);
+    data = myCache.set('UTXO', this.pendingTransactions, 0);
+
+    if (data === false) {
       console.log('Error occuerd in writing cache');
     }
-
-    
-
   }
 
   getDataFromCache(key) {
     if (myCache.has(key)) {
-      var value = myCache.take(key)
+      const value = myCache.take(key);
     }
     return value;
-
   }
-
 }
 
 module.exports.Blockchain = Blockchain;

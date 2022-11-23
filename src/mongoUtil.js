@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 
-async function connect() {
-  const url = 'mongodb://localhost:27017/crypto';
-
+// url = 'mongodb://localhost:27017/crypto';
+async function connect(url) {
   mongoose.connect(
     url,
     { useNewUrlParser: true, useUnifiedTopology: true },
