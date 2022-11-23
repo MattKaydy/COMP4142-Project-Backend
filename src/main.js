@@ -12,9 +12,9 @@ var fs = require('fs');
 var ini = require('ini');
 
 var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
-var myIP = "http://localhost:1111"
-var oppositeIP = "http://localhost:2222"
-var dbUrl = "mongodb://localhost:27017/crypto"
+var myIP = 'http://localhost:1111';
+var oppositeIP = 'http://localhost:2222';
+var dbUrl = 'mongodb://localhost:27017/crypto';
 var myPort = 1111;
 
 async function main(myKey, myWalletAddress, savjeeCoin) {
@@ -155,7 +155,7 @@ app.listen(portNumber, function () {
   console.log('Listening on port ' + portNumber);
 });
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   if (req.headers['content-type'] === 'application/json;') {
     req.headers['content-type'] = 'application/json';
   }
@@ -225,10 +225,29 @@ app.post(
     try {
       const block = req.body;
 
+      // Put transactions to blockObj and DB.
+      const transactiions = block.transactions;
+      const transactiionObjArray = [];
+      for (let i = 0; i < transactiions.length; i++) {
+        const transactionObj = new Transaction(
+          transactiions[i].fromAddress,
+          transactiions[i].toAddress,
+          transactiions[i].amount
+        );
+        transactionObj.setTimestamp(transactiions[i].timestamp);
+        if (transactiions[i].signature != null) {
+          transactionObj.signature = transactiions[i].signature;
+        }
+        if (transactionObj != null) {
+          transactiionObjArray.push(transactionObj);
+          transactionObj.saveTransactionToDB();
+        }
+      }
+
       // Create Block object
       const blockObj = new Block(
         block.timestamp,
-        block.transactions,
+        transactiionObjArray,
         block.previousBlockHash
       );
       blockObj.setIndex(block.index);
@@ -236,8 +255,16 @@ app.post(
       blockObj.setNonce(block.nonce);
       blockObj.setRoot(block.root);
 
-      console.log("Can you push the chain? " + blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash)
-      console.log("PreviousBlockHash of BlockObj: "+blockObj.previousBlockHash + "Current Block Hash: " + savjeeCoin.getLatestBlock().hash )
+      console.log(
+        'Can you push the chain? ' + blockObj.previousBlockHash ===
+          savjeeCoin.getLatestBlock().hash
+      );
+      console.log(
+        'PreviousBlockHash of BlockObj: ' +
+          blockObj.previousBlockHash +
+          'Current Block Hash: ' +
+          savjeeCoin.getLatestBlock().hash
+      );
       if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash) {
         savjeeCoin.chain.push(blockObj);
         blockObj.saveBlockToDB();
