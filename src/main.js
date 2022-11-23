@@ -12,6 +12,10 @@ var fs = require('fs');
 var ini = require('ini');
 
 var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
+var myIP = "http://localhost:1111"
+var oppositeIP = "http://localhost:2222"
+var dbUrl = "mongodb://localhost:27017/crypto"
+var myPort = 1111;
 
 async function main(myKey, myWalletAddress, savjeeCoin) {
   let isPromptDone = false;
@@ -32,7 +36,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
         savjeeCoin.getBalanceOfAddress(myWalletAddress)
     );
     console.log('Latest Block Index: ' + savjeeCoin.getLatestBlock().index);
-    console.log('My Port:' + config.myPort);
+    console.log('My Port:' + myPort);
 
     console.log('==============');
     console.log('Select an action:');
@@ -96,9 +100,9 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
 
       // Post a mined block to peers
       const data = {
-        url: 'http://10.11.74.201:1111/postminedblock',
+        url: oppositeIP + '/postminedblock',
         json: true,
-        body: 'savjeeCoin.getLatestBlock()',
+        body: savjeeCoin.getLatestBlock(),
       };
       console.log(data.body);
       request.post(data, function (error, response, body) {
@@ -141,13 +145,21 @@ function sleep(ms) {
   });
 }
 
-connect('mongodb://localhost:27017/crypto');
+connect(dbUrl);
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 // Listen to port
-const portNumber = 1111;
+const portNumber = myPort;
 app.listen(portNumber, function () {
   console.log('Listening on port ' + portNumber);
+});
+
+app.use(function(req, res, next) {
+  if (req.headers['content-type'] === 'application/json;') {
+    req.headers['content-type'] = 'application/json';
+  }
+  next();
 });
 
 // Your private key goes here
@@ -165,7 +177,7 @@ savjeeCoin.constructBlockchain();
 
 // Post current block.
 const data = {
-  url: 'http://10.11.74.201:1111/postcurrentblock',
+  url: oppositeIP + '/postcurrentblock',
   json: true,
   body: { value: 'test' },
 };
@@ -224,7 +236,9 @@ app.post(
       blockObj.setNonce(block.nonce);
       blockObj.setRoot(block.root);
 
-      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock.hash) {
+      console.log("Can you push the chain? " + blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash)
+      console.log("PreviousBlockHash of BlockObj: "+blockObj.previousBlockHash + "Current Block Hash: " + savjeeCoin.getLatestBlock().hash )
+      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash) {
         savjeeCoin.chain.push(blockObj);
         blockObj.saveBlockToDB();
       }

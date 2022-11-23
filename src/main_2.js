@@ -8,6 +8,14 @@ const express = require('express');
 const app = express();
 const request = require('request');
 const bodyParser = require('body-parser');
+var fs = require('fs');
+var ini = require('ini');
+
+var config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
+var myIP = "http://localhost:2222"
+var oppositeIP = "http://localhost:1111"
+var dbUrl = "mongodb://localhost:27017/crypto_2"
+var myPort = 2222;
 
 async function main(myKey, myWalletAddress, savjeeCoin) {
   let isPromptDone = false;
@@ -28,6 +36,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
         savjeeCoin.getBalanceOfAddress(myWalletAddress)
     );
     console.log('Latest Block Index: ' + savjeeCoin.getLatestBlock().index);
+    console.log('My Port:' + myPort);
 
     console.log('==============');
     console.log('Select an action:');
@@ -38,6 +47,7 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
     console.log('5: Show UTXO Pool');
     console.log('6. Mine Block');
     console.log('7. Check networking update');
+    console.log('8. Print Neighbor List');
     console.log('0. Exit');
 
     option = prompt('Enter an option: ');
@@ -90,10 +100,11 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
 
       // Post a mined block to peers
       const data = {
-        url: 'http://localhost:1111/postminedblock',
+        url: oppositeIP + '/postminedblock',
         json: true,
         body: savjeeCoin.getLatestBlock(),
       };
+      console.log(data.body);
       request.post(data, function (error, response, body) {
         console.log('Post mined block to peers: Success');
         if (!error && response.statusCode === 200) {
@@ -118,6 +129,11 @@ async function main(myKey, myWalletAddress, savjeeCoin) {
       console.log('Check networking update:');
       await sleep(1000);
       option2 = prompt('Press enter to exit');
+    } else if (Number(option) === 8) {
+      console.clear();
+      console.log(config.nodeList);
+      await sleep(1000);
+      option2 = prompt('Press enter to exit');
     }
   }
   process.exit();
@@ -129,14 +145,21 @@ function sleep(ms) {
   });
 }
 
-connect('mongodb://localhost:27017/crypto_2');
+connect(dbUrl);
 
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(bodyParser.json());
 // Listen to port
-const portNumber = 2222;
+const portNumber = myPort;
 app.listen(portNumber, function () {
   console.log('Listening on port ' + portNumber);
+});
+
+app.use(function(req, res, next) {
+  if (req.headers['content-type'] === 'application/json;') {
+    req.headers['content-type'] = 'application/json';
+  }
+  next();
 });
 
 // Your private key goes here
@@ -154,9 +177,9 @@ savjeeCoin.constructBlockchain();
 
 // Post current block.
 const data = {
-  url: 'http://localhost:1111/postcurrentblock',
+  url: oppositeIP + '/postcurrentblock',
   json: true,
-  body: savjeeCoin.getLatestBlock(),
+  body: { value: 'test' },
 };
 request.post(data, function (error, response, body) {
   console.log('Post current block to peers: Success');
@@ -202,19 +225,21 @@ app.post(
     try {
       const block = req.body;
 
-      console.log(block);
       // Create Block object
       const blockObj = new Block(
         block.timestamp,
         block.transactions,
         block.previousBlockHash
       );
+      
       blockObj.setIndex(block.index);
       blockObj.setDifficulty(block.difficulty);
       blockObj.setNonce(block.nonce);
       blockObj.setRoot(block.root);
 
-      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock.hash) {
+      console.log("Can you push the chain? " + blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash)
+      console.log("PreviousBlockHash of BlockObj: "+blockObj.previousBlockHash + "Current Block Hash: " + savjeeCoin.getLatestBlock().hash )
+      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash) {
         savjeeCoin.chain.push(blockObj);
         blockObj.saveBlockToDB();
       }
