@@ -290,9 +290,11 @@ class Block {
     // Add block to DB.
     const blockDB = new BlockModel({
       previousBlockHash: this.previousBlockHash,
+      index: this.index,
       timestamp: this.timestamp,
       transactions: transactionID,
       nonce: this.nonce,
+      root: this.root,
       hash: this.hash,
     });
     const blockFeedback = await blockDB.save();
@@ -409,13 +411,12 @@ class Blockchain {
     );
     this.pendingTransactions.push(rewardTx);
 
-    this.index += 1;
-
     const block = new Block(
       Date.now().toString(),
       this.pendingTransactions,
       this.getLatestBlock().hash
     );
+    block.setIndex(this.chain.length);
 
     // Adjust diificulty
     let difficulty = this.getLatestBlock().difficulty;
@@ -429,7 +430,6 @@ class Blockchain {
       difficulty = parseInt((difficulty * (10 * 0.02 * 1000)) / accum);
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
       console.log(parseInt(difficulty));
-      block.setIndex(this.chain.length);
       block.setDifficulty(difficulty);
     }
 

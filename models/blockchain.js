@@ -26,6 +26,10 @@ const blockSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  index: {
+    type: Number,
+    required: true,
+  },
   timestamp: {
     type: String,
     required: true,
@@ -38,6 +42,10 @@ const blockSchema = mongoose.Schema({
   ],
   nonce: {
     type: Number,
+    required: true,
+  },
+  root: {
+    type: String,
     required: true,
   },
   hash: {
