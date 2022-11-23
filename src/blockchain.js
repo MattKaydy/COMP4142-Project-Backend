@@ -454,16 +454,20 @@ class Blockchain {
         accum += blockTime;
       }
       console.log("Accum:"+accum);
+
+      let estimate= 10 * 3 * 1000
       
-      difficulty = parseInt(difficulty * accum / (10 * 60 * 1000));
+      difficulty = parseInt(difficulty * estimate / accum);
+      console.log("Initial Diff: " + parseInt(difficulty));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
       if (difficulty == 0) {
         difficulty = 1;
       }
-      if (difficulty > 7) {
-        difficulty = 6;
+      if (difficulty >= 6) {
+        difficulty = 5;
       }
-      console.log(parseInt(difficulty));
+      console.log("Adjusted Diff: " + parseInt(difficulty));
+      
       block.setDifficulty(difficulty);
     }
 
