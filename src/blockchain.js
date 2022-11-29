@@ -413,7 +413,6 @@ class Blockchain {
 
   async blockchainJSONToDB(blockchainJSON) {
     // CLear blockchain from DB
-    console.log('Running blockchainJSONtoDB');
     BlockModel.collection.drop();
     TransactionModel.collection.drop();
     this.chain = [this.createGenesisBlock()];
@@ -499,7 +498,6 @@ class Blockchain {
           this.chain[i - 1].timestamp - this.chain[i - 2].timestamp;
         accum += blockTime;
       }
-      console.log('Accum:' + accum);
 
       difficulty = parseInt((difficulty * accum) / (10 * 60 * 1000));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
@@ -509,7 +507,7 @@ class Blockchain {
       if (difficulty >= 6) {
         difficulty = 5;
       }
-      console.log('Adjusted Diff: ' + parseInt(difficulty));
+      console.log('Current Mining Difficulty: ' + parseInt(difficulty));
 
       block.setDifficulty(difficulty);
     }
@@ -694,7 +692,7 @@ class Blockchain {
     data = myCache.set('UTXO', this.pendingTransactions, 0);
 
     if (data === false) {
-      console.log('Error occuerd in writing cache');
+      console.log('Error occured in writing cache');
     }
   }
 

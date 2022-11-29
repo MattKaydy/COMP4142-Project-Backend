@@ -11,7 +11,6 @@ const fs = require('fs');
 const ini = require('ini');
 const mongoose = require('mongoose');
 
-const config = ini.parse(fs.readFileSync('./src/config.ini', 'utf-8'));
 const users = [
   {
     oppositeIP: 'http://localhost:2222',
@@ -31,8 +30,8 @@ const users = [
 let userID = -1;
 
 // Get blockchain from storage and construct it
-const savjeeCoin = new Blockchain();
-savjeeCoin.constructBlockchain();
+const coin = new Blockchain();
+coin.constructBlockchain();
 
 // Choose user
 console.log('Please choose user:');
@@ -83,7 +82,7 @@ app.use(function (req, res, next) {
 const data = {
   url: users[userID].oppositeIP + '/postcurrentblock',
   json: true,
-  body: { value: savjeeCoin.getLatestBlock() },
+  body: { value: coin.getLatestBlock() },
 };
 request.post(data, async function (error, response, body) {
   console.log('Post current block to peers: Success');
@@ -91,11 +90,11 @@ request.post(data, async function (error, response, body) {
     const blockchainFromPeer = response.body;
     if (
       blockchainFromPeer != null &&
-      savjeeCoin.chain.length < blockchainFromPeer.length
+      coin.chain.length < blockchainFromPeer.length
     ) {
       console.log('Synchronising blockchain...');
-      await savjeeCoin.blockchainJSONToDB(blockchainFromPeer);
-      await savjeeCoin.constructBlockchain();
+      await coin.blockchainJSONToDB(blockchainFromPeer);
+      await coin.constructBlockchain();
       console.log('Synchronised blockchain...');
     }
   }
@@ -109,8 +108,8 @@ app.post(
     try {
       console.log('Receive post current block: Success');
       const blockFromPeer = req.body;
-      if (blockFromPeer.hash !== savjeeCoin.getLatestBlock().hash) {
-        return res.status(200).send(JSON.stringify(savjeeCoin.chain));
+      if (blockFromPeer.hash !== coin.getLatestBlock().hash) {
+        return res.status(200).send(JSON.stringify(coin.chain));
       }
       return res.status(200);
     } catch (err) {
@@ -161,16 +160,16 @@ app.post(
 
       console.log(
         'Can you push the chain? ' + blockObj.previousBlockHash ===
-          savjeeCoin.getLatestBlock().hash
+          coin.getLatestBlock().hash
       );
       console.log(
         'PreviousBlockHash of BlockObj: ' +
           blockObj.previousBlockHash +
           'Current Block Hash: ' +
-          savjeeCoin.getLatestBlock().hash
+          coin.getLatestBlock().hash
       );
-      if (blockObj.previousBlockHash === savjeeCoin.getLatestBlock().hash) {
-        savjeeCoin.chain.push(blockObj);
+      if (blockObj.previousBlockHash === coin.getLatestBlock().hash) {
+        coin.chain.push(blockObj);
         blockObj.saveBlockToDB();
       }
       return res.status(200);
@@ -202,13 +201,13 @@ async function main() {
     // Print main menu
     console.log('Wecome to COMP4142 Project Demo!');
     console.log('Wallet Address: ' + myWalletAddress);
-    console.log('Mining difficulty: ' + savjeeCoin.getLatestBlock().difficulty);
-    console.log('Current Mining Reward: ' + savjeeCoin.miningReward);
+    console.log('Mining difficulty: ' + coin.getLatestBlock().difficulty);
+    console.log('Current Mining Reward: ' + coin.miningReward);
     console.log(
       'Current Wallet Balance: ' +
-        savjeeCoin.getBalanceOfAddress(myWalletAddress)
+        coin.getBalanceOfAddress(myWalletAddress)
     );
-    console.log('Latest Block Index: ' + savjeeCoin.getLatestBlock().index);
+    console.log('Latest Block Index: ' + coin.getLatestBlock().index);
     console.log('My Port:' + users[userID].myPort);
 
     console.log('==============');
@@ -232,17 +231,17 @@ async function main() {
       isPromptDone = true;
     } else if (Number(option) === 1) {
       console.clear();
-      console.log(savjeeCoin.chain);
+      console.log(coin.chain);
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 2) {
       console.clear();
       option2 = prompt('Enter a block index to check its block data: ');
-      console.log(savjeeCoin.chain[option2]);
+      console.log(coin.chain[option2]);
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 3) {
       console.clear();
       option2 = prompt('Enter a block index to check its transaction list: ');
-      console.log(savjeeCoin.chain[option2].transactions);
+      console.log(coin.chain[option2].transactions);
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 4) {
       console.clear();
@@ -255,7 +254,7 @@ async function main() {
         Number(transferCost)
       );
       tx1.signTransaction(myKey);
-      savjeeCoin.addTransaction(tx1);
+      coin.addTransaction(tx1);
 
       console.log(
         'Transaction added to UTXO. Mine a block to execute the transaction.'
@@ -263,19 +262,19 @@ async function main() {
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 5) {
       console.clear();
-      console.log(savjeeCoin.pendingTransactions);
+      console.log(coin.pendingTransactions);
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 6) {
       console.clear();
       console.log('Mining block to address ' + myWalletAddress + '...');
-      await savjeeCoin.minePendingTransactions(myWalletAddress);
+      await coin.minePendingTransactions(myWalletAddress);
       console.log('Block mined to address ' + myWalletAddress + ' !');
 
       // Post a mined block to peers
       const data = {
         url: users[userID].oppositeIP + '/postminedblock',
         json: true,
-        body: savjeeCoin.getLatestBlock(),
+        body: coin.getLatestBlock(),
       };
       console.log(data.body);
       request.post(data, function (error, response, body) {
@@ -293,7 +292,6 @@ async function main() {
       option2 = prompt('Press enter to exit');
     } else if (Number(option) === 8) {
       console.clear();
-      console.log(config.nodeList);
       await sleep(1000);
       option2 = prompt('Press enter to exit');
     }
