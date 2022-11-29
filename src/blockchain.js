@@ -103,16 +103,16 @@ class Block {
    * @param {string} previousBlockHash
    */
   constructor(timestamp, transactions, previousBlockHash = '') {
-    this.index = 0;                                                        //block index   
-    this.timestamp = timestamp;                                            //creation time
-    this.previousBlockHash = previousBlockHash;                            //hash of previous block header
-    this.hash = this.calculateHash();                                      //hash of current block header
-    this.difficulty = 2;                                                   //mining difficulty in bits
-    this.nonce = 0;                                                        //random number for PoW
+    this.index = 0;                              //block index   
+    this.timestamp = timestamp;                  //creation time
+    this.previousBlockHash = previousBlockHash;  //hash of previous block header
+    this.hash = this.calculateHash();            //hash of current block header
+    this.difficulty = 2;                         //mining difficulty in bits
+    this.nonce = 0;                              //random number for PoW
     this.root = this.build_merkle_tree(
-      this.padding(transactions)).hash;   //merkle root hash of all transactions
+      this.padding(transactions)).hash;          //merkle root hash of all transactions
     
-    this.transactions = transactions;                                      //transactions in current block
+    this.transactions = transactions;            //transactions in current block
   }
 
   /**
@@ -264,7 +264,7 @@ class Block {
         )
         .digest('hex');
     }
-    return { left, right, value, hash };
+    return { left, right, hash };
   }
 
   /**
