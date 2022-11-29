@@ -427,15 +427,15 @@ class Blockchain {
 
       // Put transactions to DB.
       const transactiions = block.transactions;
-      for (let i = 0; i < transactiions.length; i++) {
+      for (let j = 0; j < transactiions.length; j++) {
         const transactionObj = new Transaction(
-          transactiions[i].fromAddress,
-          transactiions[i].toAddress,
-          transactiions[i].amount
+          transactiions[j].fromAddress,
+          transactiions[j].toAddress,
+          transactiions[j].amount
         );
-        transactionObj.setTimestamp(transactiions[i].timestamp);
-        if (transactiions[i].signature != null) {
-          transactionObj.signature = transactiions[i].signature;
+        transactionObj.setTimestamp(transactiions[j].timestamp);
+        if (transactiions[j].signature != null) {
+          transactionObj.signature = transactiions[j].signature;
         }
         if (transactionObj != null) {
           transactionObj.saveTransactionToDB();
