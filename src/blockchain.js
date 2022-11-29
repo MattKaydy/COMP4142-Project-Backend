@@ -5,9 +5,8 @@ const ec = new EC('secp256k1');
 const debug = require('debug')('COMP4142-Project-Backend:blockchain');
 const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
-const NodeCache = require( "node-cache" ); 
+const NodeCache = require('node-cache');
 const myCache = new NodeCache();
-const { connect } = require('./mongoUtil');
 
 class Transaction {
   /**
@@ -110,7 +109,7 @@ class Block {
     this.hash = this.calculateHash();
     this.difficulty = 2;
     this.nonce = 0;
-    this.root = this.build_merkle_tree(this.padding(transactions)).hash; 
+    this.root = this.build_merkle_tree(this.padding(transactions)).hash;
     this.transactions = transactions;
   }
 
@@ -203,7 +202,6 @@ class Block {
       return [''];
     }
     const reducedSize = parseInt(Math.pow(2, parseInt(Math.log2(size))));
-
     let padSize = 0;
     if (reducedSize !== size) {
       padSize = 2 * reducedSize - size;
@@ -365,10 +363,10 @@ class Blockchain {
         const block = blockchainData[i];
 
         // Each transaction of a block. Create transaction objects in a block
-        const transactiions = block.transactions;
+        const transactions = block.transactions;
         const transactiionObjArray = [];
-        for (let i = 0; i < transactiions.length; i++) {
-          const transactiionID = transactiions[i];
+        for (let j = 0; j < transactions.length; j++) {
+          const transactiionID = transactions[j];
           const transactiion = await TransactionModel.findById(transactiionID);
           if (transactiion == null) {
             console.log(
@@ -410,6 +408,54 @@ class Blockchain {
     } catch (err) {
       console.log(err);
     }
+    return true;
+  }
+
+  async blockchainJSONToDB(blockchainJSON) {
+    // CLear blockchain from DB
+    console.log('Running blockchainJSONtoDB');
+    BlockModel.collection.drop();
+    TransactionModel.collection.drop();
+    this.chain = [this.createGenesisBlock()];
+    this.transaction = [];
+
+    // Modify the recerived models from DB.
+    for (let i = 1; i < blockchainJSON.length; i++) {
+      // Each block of a chain. Ignored the Genesis block.
+      const block = blockchainJSON[i];
+
+      // Put transactions to DB.
+      const transactions = block.transactions;
+      for (let j = 0; j < transactions.length; j++) {
+        const transactionObj = new Transaction(
+          transactions[j].fromAddress,
+          transactions[j].toAddress,
+          transactions[j].amount
+        );
+        transactionObj.setTimestamp(transactions[j].timestamp);
+        if (transactions[j].signature != null) {
+          transactionObj.signature = transactions[j].signature;
+        }
+        if (transactionObj != null) {
+          await transactionObj.saveTransactionToDB();
+        }
+      }
+
+      // Create bock object
+      const blockObj = new Block(
+        block.timestamp,
+        block.transactions,
+        block.previousBlockHash
+      );
+      blockObj.setIndex(block.index);
+      blockObj.setDifficulty(block.difficulty);
+      blockObj.setNonce(block.nonce);
+      blockObj.setRoot(block.root);
+
+      // Put a block to DB
+      await blockObj.saveBlockToDB();
+    }
+    return true;
   }
 
   /**
@@ -453,12 +499,9 @@ class Blockchain {
           this.chain[i - 1].timestamp - this.chain[i - 2].timestamp;
         accum += blockTime;
       }
-      console.log("Accum:"+accum);
+      console.log('Accum:' + accum);
 
-      let estimate= 10 * 3 * 1000
-      
-      difficulty = parseInt(difficulty * estimate / accum);
-      console.log("Initial Diff: " + parseInt(difficulty));
+      difficulty = parseInt((difficulty * accum) / (10 * 60 * 1000));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
       if (difficulty == 0) {
         difficulty = 1;
@@ -466,8 +509,8 @@ class Blockchain {
       if (difficulty >= 6) {
         difficulty = 5;
       }
-      console.log("Adjusted Diff: " + parseInt(difficulty));
-      
+      console.log('Adjusted Diff: ' + parseInt(difficulty));
+
       block.setDifficulty(difficulty);
     }
 
@@ -644,28 +687,23 @@ class Blockchain {
   }
 
   saveDataToCache() {
-    var data = true;
+    let data = true;
 
-    data = myCache.set("Height", this.chain.length, 0);
-    data = myCache.set("NodeList", this.chain, 0);
-    data = myCache.set("UTXO", this.pendingTransactions, 0);
-    
-    if (data == false) {
+    data = myCache.set('Height', this.chain.length, 0);
+    data = myCache.set('NodeList', this.chain, 0);
+    data = myCache.set('UTXO', this.pendingTransactions, 0);
+
+    if (data === false) {
       console.log('Error occuerd in writing cache');
     }
-
-    
-
   }
 
   getDataFromCache(key) {
     if (myCache.has(key)) {
-      var value = myCache.take(key)
+      const value = myCache.take(key);
     }
     return value;
-
   }
-
 }
 
 module.exports.Blockchain = Blockchain;
