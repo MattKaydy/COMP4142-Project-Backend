@@ -7,7 +7,6 @@ const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
 const NodeCache = require('node-cache');
 const myCache = new NodeCache();
-const { connect } = require('./mongoUtil');
 const request = require('request');
 const { Console } = require('console');
 
@@ -205,7 +204,6 @@ class Block {
       return [''];
     }
     const reducedSize = parseInt(Math.pow(2, parseInt(Math.log2(size))));
-    7;
     let padSize = 0;
     if (reducedSize !== size) {
       padSize = 2 * reducedSize - size;
@@ -416,7 +414,7 @@ class Blockchain {
 
   async blockchainJSONToDB(blockchainJSON) {
     // CLear blockchain from DB
-    console.log("Running blockchainJSONtoDB");
+    console.log('Running blockchainJSONtoDB');
     BlockModel.collection.drop();
     TransactionModel.collection.drop();
     this.chain = [this.createGenesisBlock()];
