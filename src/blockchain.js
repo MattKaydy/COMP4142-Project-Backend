@@ -7,8 +7,6 @@ const BlockModel = require('../models/blockchain').block;
 const TransactionModel = require('../models/blockchain').transaction;
 const NodeCache = require('node-cache');
 const myCache = new NodeCache();
-const request = require('request');
-const { Console } = require('console');
 
 class Transaction {
   /**
@@ -365,10 +363,10 @@ class Blockchain {
         const block = blockchainData[i];
 
         // Each transaction of a block. Create transaction objects in a block
-        const transactiions = block.transactions;
+        const transactions = block.transactions;
         const transactiionObjArray = [];
-        for (let i = 0; i < transactiions.length; i++) {
-          const transactiionID = transactiions[i];
+        for (let j = 0; j < transactions.length; j++) {
+          const transactiionID = transactions[j];
           const transactiion = await TransactionModel.findById(transactiionID);
           if (transactiion == null) {
             console.log(
@@ -410,6 +408,7 @@ class Blockchain {
     } catch (err) {
       console.log(err);
     }
+    return true;
   }
 
   async blockchainJSONToDB(blockchainJSON) {
@@ -426,19 +425,19 @@ class Blockchain {
       const block = blockchainJSON[i];
 
       // Put transactions to DB.
-      const transactiions = block.transactions;
-      for (let j = 0; j < transactiions.length; j++) {
+      const transactions = block.transactions;
+      for (let j = 0; j < transactions.length; j++) {
         const transactionObj = new Transaction(
-          transactiions[j].fromAddress,
-          transactiions[j].toAddress,
-          transactiions[j].amount
+          transactions[j].fromAddress,
+          transactions[j].toAddress,
+          transactions[j].amount
         );
-        transactionObj.setTimestamp(transactiions[j].timestamp);
-        if (transactiions[j].signature != null) {
-          transactionObj.signature = transactiions[j].signature;
+        transactionObj.setTimestamp(transactions[j].timestamp);
+        if (transactions[j].signature != null) {
+          transactionObj.signature = transactions[j].signature;
         }
         if (transactionObj != null) {
-          transactionObj.saveTransactionToDB();
+          await transactionObj.saveTransactionToDB();
         }
       }
 
@@ -454,8 +453,9 @@ class Blockchain {
       blockObj.setRoot(block.root);
 
       // Put a block to DB
-      blockObj.saveBlockToDB();
+      await blockObj.saveBlockToDB();
     }
+    return true;
   }
 
   /**
