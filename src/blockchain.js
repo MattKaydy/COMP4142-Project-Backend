@@ -501,7 +501,7 @@ class Blockchain {
 
       difficulty = parseInt((difficulty * accum) / (10 * 60 * 1000));
       // console.log(parseInt((this.difficulty * (10 * 0.5 * 1000)) / this.accum));
-      if (difficulty == 0) {
+      if (difficulty === 0) {
         difficulty = 1;
       }
       if (difficulty >= 6) {
@@ -697,8 +697,9 @@ class Blockchain {
   }
 
   getDataFromCache(key) {
+    let value;
     if (myCache.has(key)) {
-      const value = myCache.take(key);
+      value = myCache.take(key);
     }
     return value;
   }

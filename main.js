@@ -7,8 +7,6 @@ const express = require('express');
 const app = express();
 const request = require('request');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const ini = require('ini');
 const mongoose = require('mongoose');
 
 const users = [
@@ -204,8 +202,7 @@ async function main() {
     console.log('Mining difficulty: ' + coin.getLatestBlock().difficulty);
     console.log('Current Mining Reward: ' + coin.miningReward);
     console.log(
-      'Current Wallet Balance: ' +
-        coin.getBalanceOfAddress(myWalletAddress)
+      'Current Wallet Balance: ' + coin.getBalanceOfAddress(myWalletAddress)
     );
     console.log('Latest Block Index: ' + coin.getLatestBlock().index);
     console.log('My Port:' + users[userID].myPort);

@@ -58,22 +58,8 @@ const blockSchema = mongoose.Schema({
   },
 });
 
-// const blockchainSchema = mongoose.Schema({
-//   chain: [
-//     {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: 'block',
-//     },
-//   ],
-//   miningReward: {
-//     type: Number,
-//     required: true,
-//   },
-// });
-
 module.exports.block = new mongoose.model('block', blockSchema);
 module.exports.transaction = new mongoose.model(
   'transaction',
   transactionSchema
 );
-// module.exports.blockchain = new mongoose.model('blockchain', blockchainSchema);
